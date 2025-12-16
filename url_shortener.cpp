@@ -1,38 +1,29 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
-#include <random>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
 class URLShortener {
 private:
-    // Hash table: shortCode -> longURL
-    unordered_map<string, string> urlMap;
+    unordered_map<string, string> urlMap;      // shortCode -> longURL
+    unordered_map<string, string> reverseMap;  // longURL -> shortCode
     
-    // Reverse hash table: longURL -> shortCode (to avoid duplicates)
-    unordered_map<string, string> reverseMap;
-    
-    // Characters used for generating short codes
     const string CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     
-    // Generate a random short code
     string generateCode(int length = 6) {
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<> dist(0, CHARS.size() - 1);
-        
         string code;
         for (int i = 0; i < length; i++) {
-            code += CHARS[dist(gen)];
+            code += CHARS[rand() % CHARS.size()];
         }
         return code;
     }
 
 public:
-    // Shorten a URL
     string shorten(const string& longURL) {
-        // Check if URL already shortened
+        // Check if already exists
         if (reverseMap.find(longURL) != reverseMap.end()) {
             return reverseMap[longURL];
         }
@@ -43,14 +34,13 @@ public:
             code = generateCode();
         } while (urlMap.find(code) != urlMap.end());
         
-        // Store in both hash tables
+        // Store in hash tables
         urlMap[code] = longURL;
         reverseMap[longURL] = code;
         
         return code;
     }
     
-    // Expand a short code to original URL
     string expand(const string& code) {
         if (urlMap.find(code) != urlMap.end()) {
             return urlMap[code];
@@ -58,74 +48,48 @@ public:
         return "ERROR: Code not found";
     }
     
-    // Display all mappings
     void displayAll() {
         if (urlMap.empty()) {
             cout << "No URLs stored.\n";
             return;
         }
         
-        cout << "\n+--------+------------------------------------------+\n";
-        cout << "| Code   | Original URL                             |\n";
-        cout << "+--------+------------------------------------------+\n";
-        
+        cout << "\nStored URLs:\n";
         for (const auto& pair : urlMap) {
-            cout << "| " << pair.first << " | " << pair.second.substr(0, 40);
-            if (pair.second.length() > 40) cout << "...";
-            cout << "\n";
+            cout << pair.first << " -> " << pair.second << "\n";
         }
-        cout << "+--------+------------------------------------------+\n";
-        cout << "Total entries: " << urlMap.size() << "\n";
+        cout << "Total: " << urlMap.size() << "\n";
     }
 };
 
-void displayMenu() {
-    cout << "\n===== URL SHORTENER =====\n";
-    cout << "1. Shorten URL\n";
-    cout << "2. Expand URL\n";
-    cout << "3. Display All\n";
-    cout << "4. Exit\n";
-    cout << "Choice: ";
-}
-
 int main() {
+    srand(time(0));  // Seed random number generator
+    
     URLShortener shortener;
     int choice;
     string input;
     
-    cout << "Welcome to URL Shortener!\n";
-    cout << "Using Hash Table (unordered_map) for O(1) lookups\n";
-    
     while (true) {
-        displayMenu();
+        cout << "\n1.Shorten  2.Expand  3.Display  4.Exit\nChoice: ";
         cin >> choice;
-        cin.ignore(); // Clear newline
+        cin.ignore();
         
         switch (choice) {
-            case 1: {
-                cout << "Enter long URL: ";
+            case 1:
+                cout << "Enter URL: ";
                 getline(cin, input);
-                string code = shortener.shorten(input);
-                cout << "Short code: " << code << "\n";
+                cout << "Code: " << shortener.shorten(input) << "\n";
                 break;
-            }
-            case 2: {
-                cout << "Enter short code: ";
+            case 2:
+                cout << "Enter code: ";
                 getline(cin, input);
-                string url = shortener.expand(input);
-                cout << "Original URL: " << url << "\n";
+                cout << "URL: " << shortener.expand(input) << "\n";
                 break;
-            }
             case 3:
                 shortener.displayAll();
                 break;
             case 4:
-                cout << "Goodbye!\n";
                 return 0;
-            default:
-                cout << "Invalid choice.\n";
         }
     }
-    
-    return 0;
 }
